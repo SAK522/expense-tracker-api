@@ -13,6 +13,8 @@ pydantic-settings reads a `.env` file during local development, and reads
 real environment variables in production (Render/Railway). Same code, two
 sources — you never change the code to deploy.
 """
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,10 +22,13 @@ class Settings(BaseSettings):
     # Where the database lives. Defaults to a local SQLite file for easy dev.
     # In production you set DATABASE_URL to your PostgreSQL URL instead.
     database_url: str = "sqlite:///./expense.db"
+    # Optional PostgreSQL schema. Lets several apps share one database (e.g. Render's single
+    # free Postgres) while keeping their tables completely separate.
+    database_schema: Optional[str] = None
 
     # The secret used to sign JWT tokens. Anyone who knows it can forge logins,
     # so in production you override it with a long random value.
-    jwt_secret: str = "dev-only-secret-change-me"
+    jwt_secret: str = "dev-only-insecure-secret-change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
@@ -32,11 +37,16 @@ class Settings(BaseSettings):
 
     @property
     def sqlalchemy_url(self) -> str:
-        """Render/Heroku hand out URLs starting with 'postgres://', but
-        SQLAlchemy 2 only accepts 'postgresql://'. Normalise it here."""
+        """Normalise the database URL for SQLAlchemy.
+
+        - Render/Heroku hand out 'postgres://', which SQLAlchemy doesn't accept.
+        - The driver is named explicitly ('+psycopg2'): SQLAlchemy 2.1 changed its default
+          PostgreSQL driver, so relying on the default would break when upgrading.
+        """
         url = self.database_url
-        if url.startswith("postgres://"):
-            url = url.replace("postgres://", "postgresql://", 1)
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg2://" + url[len(prefix):]
         return url
 
 

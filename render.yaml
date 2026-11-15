@@ -1,5 +1,8 @@
-# Render "Blueprint": creates the web service AND a PostgreSQL database,
-# and wires them together automatically. In Render: New -> Blueprint -> pick this repo.
+# Render Blueprint: creates the web service AND a PostgreSQL database, and wires them together.
+# In Render: New -> Blueprint -> pick this repo.
+#
+# The database is named `portfolio-db` because Render allows one free Postgres database per
+# workspace: other projects (e.g. document-qa-api) share it, each in its own schema.
 services:
   - type: web
     name: expense-tracker-api
@@ -13,11 +16,13 @@ services:
         value: 3.12.7
       - key: JWT_SECRET
         generateValue: true          # Render generates a strong random secret
+      - key: DATABASE_SCHEMA
+        value: expense               # this app's tables live in the "expense" schema
       - key: DATABASE_URL
         fromDatabase:
-          name: expense-tracker-db
+          name: portfolio-db
           property: connectionString
 
 databases:
-  - name: expense-tracker-db
+  - name: portfolio-db
     plan: free

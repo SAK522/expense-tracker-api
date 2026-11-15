@@ -14,7 +14,7 @@ A secured REST API for tracking personal income and expenses. Built with **FastA
 - Summary endpoint: total income, total expense and balance for any period
 - Per-user data isolation: other users' records return `404`, as if they don't exist
 - Input validation (positive amounts, valid dates, valid emails) via Pydantic
-- 20 automated tests (pytest) covering auth, CRUD, filters, summary and ownership
+- 25 automated tests (pytest) covering auth, CRUD, filters, summary and ownership
 
 ## Tech stack
 
@@ -112,12 +112,12 @@ Money values are returned as strings (e.g. `"450.00"`) so they never lose precis
 ## Deploy to Render
 
 1. Push this project to a GitHub repository.
-2. In Render: **New → Blueprint**, then select the repository. `render.yaml` creates the web service and a PostgreSQL database and connects them.
+2. In Render: **New → Blueprint**, then select the repository. `render.yaml` creates the web service and a free PostgreSQL database named `portfolio-db`, and connects them.
 3. Wait for the build, then open `https://<your-service>.onrender.com/docs`.
 
-`JWT_SECRET` is generated automatically and `DATABASE_URL` is filled in from the database. Free-tier services sleep when idle (the first request after a while is slow), and Render's free PostgreSQL databases expire after a limited period, so check Render's current free-tier terms.
+`JWT_SECRET` is generated automatically and `DATABASE_URL` is filled in from the database. The app keeps its tables in its own PostgreSQL schema (`DATABASE_SCHEMA=expense`), so other projects can share the same free database without their tables mixing. Free services sleep after 15 minutes without traffic, and free Render PostgreSQL databases expire 30 days after creation, so check Render's current free-tier terms.
 
-**Alternative (Docker / Railway):** the included `Dockerfile` runs anywhere. Set `DATABASE_URL` and `JWT_SECRET` as environment variables.
+**Alternative (Docker / Railway):** the included `Dockerfile` runs anywhere. Set `DATABASE_URL`, `JWT_SECRET` and optionally `DATABASE_SCHEMA` as environment variables.
 
 ## Project structure
 

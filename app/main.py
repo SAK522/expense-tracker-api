@@ -6,13 +6,13 @@ Docs:          http://127.0.0.1:8000/docs
 """
 from fastapi import FastAPI
 
-from app.database import Base, engine
+from app.database import init_db
 from app import models  # noqa: F401  (registers tables with Base)
 from app.routers import auth, transactions, summary
 
 # Creates missing tables on startup. (A migration tool like Alembic is the
 # "future work" upgrade for evolving schemas.)
-Base.metadata.create_all(bind=engine)
+init_db()
 
 app = FastAPI(
     title="Expense Tracker API",
