@@ -2,11 +2,14 @@
 
 A secured REST API for tracking personal income and expenses. Built with **FastAPI**, **PostgreSQL**, and **JWT authentication**. Each user can only see and change their own data.
 
-- **Live API:** `https://<your-service>.onrender.com` ← add after deploying
-- **Interactive docs:** `https://<your-service>.onrender.com/docs`
+- **Web app (no coding needed):** https://expense-tracker-api-9rcd.onrender.com
+- **Interactive API docs (for developers):** https://expense-tracker-api-9rcd.onrender.com/docs
+
+> Free hosting: the first request after 15 idle minutes can take up to a minute while the server wakes up.
 
 ## Features
 
+- **A web dashboard for non-technical users** at `/`: a one-click demo month, income / spending / balance cards, spending by category, an add-and-edit form and the full transaction list. Amounts are shown in rupees with Indian digit grouping. A private guest account is created automatically, with no sign-up.
 - Sign up and log in with email + password (passwords hashed with bcrypt)
 - JWT bearer-token authentication on every protected route
 - Create, read, update and delete income/expense transactions
@@ -14,7 +17,7 @@ A secured REST API for tracking personal income and expenses. Built with **FastA
 - Summary endpoint: total income, total expense and balance for any period
 - Per-user data isolation: other users' records return `404`, as if they don't exist
 - Input validation (positive amounts, valid dates, valid emails) via Pydantic
-- 25 automated tests (pytest) covering auth, CRUD, filters, summary and ownership
+- 26 automated tests (pytest) covering auth, CRUD, filters, summary and ownership
 
 ## Tech stack
 
@@ -123,7 +126,8 @@ Money values are returned as strings (e.g. `"450.00"`) so they never lose precis
 
 ```
 app/
-  main.py              # app entry point, registers routers
+  main.py              # app entry point, registers routers, serves the web app at /
+  web/index.html       # the web dashboard (one self-contained page, no build step)
   config.py            # settings from environment variables
   database.py          # engine, sessions, get_db dependency
   models.py            # SQLAlchemy tables (users, transactions)

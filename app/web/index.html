@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Ledger — Expense Tracker</title>
+<meta name="description" content="Track income and spending month by month: see where your money goes, by category.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect x=%274%27 y=%274%27 width=%2756%27 height=%2756%27 rx=%2714%27 fill=%27%23173b2b%27/%3E%3Ctext x=%2732%27 y=%2744%27 text-anchor=%27middle%27 font-family=%27Arial,sans-serif%27 font-weight=%27700%27 font-size=%2734%27 fill=%27%23c8f169%27%3E%E2%82%B9%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f3ec; --bg-2:#e8eadf; --card:#ffffff; --ink:#14201a; --ink-2:#435047; --muted:#7c877f; --rule:#dfe2d6; --rule-2:#c9cebd;
+  --forest:#173b2b; --lime:#c8f169; --in:#1f7a4d; --in-bg:#e2f2e7; --out:#c2502e; --out-bg:#f8e6df;
+  --shadow:0 1px 0 rgba(20,32,26,.04),0 14px 34px -22px rgba(20,32,26,.45);
+  --ui:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif; --num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box} [hidden]{display:none!important} html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--ui);font-variation-settings:"opsz" 14}
+a{color:inherit} button,input,select{font:inherit;color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 28px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:5;background:rgba(242,243,236,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:700;font-size:19px;letter-spacing:-.01em}
+.brand .mk{width:30px;height:30px;border-radius:8px;background:var(--forest);color:var(--lime);display:grid;place-items:center;font:700 17px/1 var(--num)}
+.top nav{display:flex;gap:24px;font-size:14.5px;color:var(--ink-2)} .top nav a{text-decoration:none} .top nav a:hover{color:var(--ink)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:52px;align-items:center;padding:64px 0 56px}
+.tag{display:inline-flex;gap:8px;align-items:center;font:500 13px/1 var(--num);letter-spacing:.06em;text-transform:uppercase;color:var(--in);
+  background:var(--in-bg);padding:7px 11px;border-radius:999px}
+h1{font-weight:800;font-size:clamp(40px,5.4vw,66px);line-height:.98;letter-spacing:-.035em;margin:20px 0 18px;font-variation-settings:"opsz" 96}
+h1 .hl{background:linear-gradient(transparent 58%,var(--lime) 58%,var(--lime) 92%,transparent 92%)}
+.lede{font-size:18.5px;color:var(--ink-2);max-width:30em;margin:0 0 30px}
+.ctas{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--forest);background:var(--forest);color:#fff;padding:12px 20px;border-radius:12px;
+  font-weight:600;font-size:15.5px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 10px 20px -12px rgba(23,59,43,.7)}
+.btn.ghost{background:transparent;color:var(--forest)}
+.btn.small{padding:9px 14px;font-size:14px;border-radius:10px}
+.btn:disabled{opacity:.5;cursor:wait;transform:none;box-shadow:none}
+.fine{margin-top:16px;font-size:13.5px;color:var(--muted)}
+
+/* receipt specimen */
+.receipt{position:relative;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:26px 26px 30px;transform:rotate(1.5deg);max-width:420px;justify-self:end;width:100%}
+.receipt::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:12px;
+  background:radial-gradient(circle at 8px 0,transparent 8px,var(--card) 8.5px) 0 0/16px 12px repeat-x}
+.receipt .h{display:flex;justify-content:space-between;font:500 12.5px/1 var(--num);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.receipt .big{font:600 34px/1.1 var(--num);margin:14px 0 2px;letter-spacing:-.02em}
+.receipt .sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px dashed var(--rule-2);font-size:14.5px}
+.rrow b{font:500 14px/1 var(--num)}
+.bar{height:8px;border-radius:5px;background:var(--bg-2);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--out);transform-origin:left;animation:grow 1s .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.cats .bar i{animation:none}
+
+/* dashboard */
+#app{padding:10px 0 60px;scroll-margin-top:80px}
+.dash-head{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;margin-bottom:18px}
+.month{display:flex;align-items:center;gap:8px}
+.month h2{margin:0 6px;font-weight:700;font-size:28px;letter-spacing:-.02em;min-width:220px;text-align:center}
+.arrow{width:38px;height:38px;border-radius:10px;border:1px solid var(--rule-2);background:var(--card);cursor:pointer;font-size:18px}
+.arrow:hover{background:var(--bg-2)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}
+.stat{background:var(--card);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);border:1px solid var(--rule)}
+.stat .l{font:500 12.5px/1 var(--num);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.stat .v{font:600 clamp(22px,2.6vw,30px)/1.15 var(--num);margin-top:10px;letter-spacing:-.02em;word-break:break-all}
+.stat.in .v{color:var(--in)} .stat.out .v{color:var(--out)}
+.stat.bal{background:var(--forest);color:#fff;border-color:var(--forest)} .stat.bal .l{color:#a9c0b2} .stat.bal .v{color:var(--lime)}
+.stat .s{font-size:13px;color:var(--muted);margin-top:4px} .stat.bal .s{color:#a9c0b2}
+.grid{display:grid;grid-template-columns:1fr 1.25fr;gap:18px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px}
+.panel h3{margin:0 0 14px;font-size:17px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.panel h3 small{font-weight:400;font-size:13px;color:var(--muted)}
+.cats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cat{width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:10px;padding:8px 10px;cursor:pointer}
+.cat:hover{background:var(--bg)} .cat[aria-pressed="true"]{border-color:var(--forest);background:var(--bg)}
+.cat .row{display:flex;justify-content:space-between;gap:10px;font-size:14.5px}
+.cat .row b{font:500 14px/1.4 var(--num)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.empty-note{color:var(--muted);font-size:14.5px;margin:6px 0}
+
+form.add{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid var(--rule)}
+form.add .full{grid-column:1/-1}
+.seg{display:inline-flex;background:var(--bg-2);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg button[data-type="expense"][aria-pressed="true"]{color:var(--out)} .seg button[data-type="income"][aria-pressed="true"]{color:var(--in)}
+.field label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px;font-weight:500}
+.field input{width:100%;border:1px solid var(--rule-2);background:#fff;border-radius:10px;padding:10px 12px;font-size:15.5px;outline:none}
+.field input:focus{border-color:var(--forest);box-shadow:0 0 0 3px rgba(23,59,43,.12)}
+.field .money{position:relative} .field .money span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:var(--num)}
+.field .money input{padding-left:28px;font-family:var(--num)}
+.form-actions{display:flex;gap:10px;align-items:center}
+.editing-note{font-size:13px;color:var(--out)}
+
+.ledger{list-style:none;margin:0;padding:0}
+.ledger li{display:grid;grid-template-columns:62px 1fr auto auto;gap:12px;align-items:center;padding:11px 6px;border-top:1px dashed var(--rule-2)}
+.ledger li:first-child{border-top:0}
+.ledger li.editing{background:var(--bg);border-radius:10px}
+.ledger .d{font:500 13px/1.2 var(--num);color:var(--muted);text-align:center}
+.ledger .d b{display:block;font-size:18px;color:var(--ink)}
+.ledger .c{min-width:0} .ledger .c b{display:block;font-weight:600;font-size:15px}
+.ledger .c > span{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ledger .a{font:600 15px/1 var(--num);white-space:nowrap} .ledger .a.in{color:var(--in)} .ledger .a.out{color:var(--out)}
+.row-actions{display:flex;gap:4px}
+.icon{border:1px solid transparent;background:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.icon:hover{border-color:var(--rule-2);background:#fff}
+.icon.armed{color:var(--out);border-color:var(--out)}
+.filter-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:var(--bg-2);border-radius:999px;padding:4px 6px 4px 10px}
+.filter-pill button{border:0;background:var(--card);border-radius:999px;width:20px;height:20px;cursor:pointer;line-height:1}
+
+.status{position:fixed;left:50%;top:76px;transform:translate(-50%,-14px);opacity:0;pointer-events:none;background:var(--forest);color:#fff;
+  padding:11px 18px;border-radius:12px;font-size:14px;max-width:min(92vw,540px);text-align:center;transition:all .25s;z-index:10}
+.status.show{opacity:1;transform:translate(-50%,0)} .status.err{background:var(--out)}
+
+.how{padding:56px 0;border-top:1px solid var(--rule)}
+.how h2{font-weight:800;font-size:34px;letter-spacing:-.03em;margin:12px 0 28px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.col{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:20px}
+.col .n{font:600 13px/1 var(--num);color:var(--in)}
+.col h3{margin:10px 0 6px;font-size:18px} .col p{margin:0;color:var(--ink-2);font-size:14.5px}
+footer{border-top:1px solid var(--rule);padding:24px 0 40px;font-size:13.5px;color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px}
+
+@media (max-width:920px){.hero{grid-template-columns:1fr}.receipt{justify-self:start}.grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr}}
+@media (max-width:640px){.wrap{padding:0 18px}.stats{grid-template-columns:1fr}.month h2{min-width:0;font-size:22px}
+  form.add{grid-template-columns:1fr}.ledger li{grid-template-columns:52px 1fr auto}.row-actions{grid-column:2/-1;justify-content:flex-end}.top nav .hide-sm{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a href="#hero" class="brand" aria-label="Pocket Ledger, home"><span class="mk">₹</span>Pocket Ledger</a>
+    <nav aria-label="Main"><a href="#how">How it works</a><a class="hide-sm" href="/docs">For developers</a><a class="hide-sm" href="https://github.com/SAK522/expense-tracker-api">Source code</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="hero" aria-labelledby="h1">
+    <div>
+      <span class="tag">● Personal expense tracker</span>
+      <h1 id="h1">Where did my money go <span class="hl">this month?</span></h1>
+      <p class="lede">Log what comes in and what goes out. See your balance, your spending by category, and every transaction, month by month.</p>
+      <div class="ctas">
+        <button class="btn" id="demo" type="button">Try a demo month →</button>
+        <button class="btn ghost" id="fresh" type="button">Start with an empty ledger</button>
+      </div>
+      <p class="fine">No sign-up. A private account is created for this browser, and nobody else can see your entries.</p>
+    </div>
+    <div class="receipt" aria-hidden="true">
+      <div class="h"><span>November</span><span>Balance</span></div>
+      <div class="big">₹21,384</div>
+      <div class="sub">left after ₹30,616 spent</div>
+      <div class="rrow"><span>Rent</span><b>₹12,000</b></div><div class="bar"><i style="width:100%"></i></div>
+      <div class="rrow"><span>Groceries</span><b>₹6,240</b></div><div class="bar"><i style="width:52%;animation-delay:.45s"></i></div>
+      <div class="rrow"><span>Transport</span><b>₹2,180</b></div><div class="bar"><i style="width:18%;animation-delay:.6s"></i></div>
+    </div>
+  </section>
+
+  <section id="app" hidden aria-label="Your ledger">
+    <div class="dash-head">
+      <div class="month">
+        <button class="arrow" id="prev" type="button" aria-label="Previous month">‹</button>
+        <h2 id="month-label" aria-live="polite"></h2>
+        <button class="arrow" id="next" type="button" aria-label="Next month">›</button>
+      </div>
+      <button class="btn small ghost" id="today" type="button">This month</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat in"><div class="l">Money in</div><div class="v num" id="s-in">₹0</div><div class="s" id="s-in-n"></div></div>
+      <div class="stat out"><div class="l">Money out</div><div class="v num" id="s-out">₹0</div><div class="s" id="s-out-n"></div></div>
+      <div class="stat bal"><div class="l">Balance</div><div class="v num" id="s-bal">₹0</div><div class="s" id="s-bal-n">Money in minus money out</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>Where did it go? <small>Click a category to filter</small></h3>
+        <ul class="cats" id="cats"></ul>
+        <p class="empty-note" id="cats-empty">No spending recorded this month.</p>
+
+        <form class="add" id="form" novalidate>
+          <div class="full form-actions" style="justify-content:space-between">
+            <div class="seg" role="group" aria-label="Type">
+              <button type="button" data-type="expense" aria-pressed="true">Expense</button>
+              <button type="button" data-type="income" aria-pressed="false">Income</button>
+            </div>
+            <span class="editing-note" id="editing-note" hidden>Editing a transaction</span>
+          </div>
+          <div class="field"><label for="amount">Amount</label><div class="money"><span>₹</span><input id="amount" inputmode="decimal" placeholder="450" required></div></div>
+          <div class="field"><label for="date">Date</label><input id="date" type="date" required></div>
+          <div class="field"><label for="category">Category</label><input id="category" list="cat-list" placeholder="Groceries" maxlength="50" required></div>
+          <div class="field"><label for="note">Note <span style="color:var(--muted)">(optional)</span></label><input id="note" maxlength="255" placeholder="Weekly shopping"></div>
+          <datalist id="cat-list"></datalist>
+          <div class="full form-actions">
+            <button class="btn" id="save" type="submit">Add expense</button>
+            <button class="btn ghost small" id="cancel-edit" type="button" hidden>Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3><span>Transactions</span> <span id="filter-slot"></span></h3>
+        <ul class="ledger" id="ledger" aria-live="polite"></ul>
+        <p class="empty-note" id="ledger-empty" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how" aria-labelledby="how-h">
+    <span class="tag">How it works</span>
+    <h2 id="how-h">Simple on the outside. Secure underneath.</h2>
+    <div class="cols">
+      <div class="col"><div class="n">01</div><h3>Every entry is yours alone</h3><p>Each request carries a secure login token. The server only ever reads or changes entries that belong to that token's owner.</p></div>
+      <div class="col"><div class="n">02</div><h3>Totals come from the database</h3><p>Your monthly income, spending and balance are calculated by the database in one step, using exact decimal amounts, so paise never drift.</p></div>
+      <div class="col"><div class="n">03</div><h3>Bad input is stopped at the door</h3><p>Negative amounts, impossible dates or empty categories are rejected before they reach your ledger, with a clear message.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>Built by <a href="https://github.com/SAK522">T. Sakthi</a> with FastAPI, PostgreSQL and JWT authentication.</span><span>Free hosting: the first request after a quiet spell can take up to a minute.</span></div></footer>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const CATEGORIES = ["Groceries", "Food & dining", "Rent", "Transport", "Bills", "Shopping", "Health", "Entertainment", "Education", "Salary", "Freelance", "Other"];
+  const COLORS = ["#c2502e", "#1f7a4d", "#2f5d9e", "#b8860b", "#7a4fa3", "#0f7c8c", "#b5446e", "#5c6b2e", "#8a5a3c", "#3c4f63"];
+  const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2, minimumFractionDigits: 0 });
+  const fmt = (n) => inr.format(Number(n));
+  const state = { token: null, month: firstOfMonth(new Date()), txs: [], summary: null, filter: null, type: "expense", editing: null };
+
+  function firstOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+  const pad = (n) => String(n).padStart(2, "0");
+  const monthKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const colorFor = (s) => { let h = 0; for (const ch of s.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem(k); } catch {} },
+  };
+
+  let t;
+  function say(msg, { error = false, sticky = false } = {}) {
+    const s = $("#status"); s.textContent = msg; s.classList.toggle("err", error); s.classList.add("show");
+    clearTimeout(t); if (!sticky) t = setTimeout(() => s.classList.remove("show"), error ? 6000 : 2800);
+  }
+
+  // ---------- API ----------
+  async function api(path, opts = {}, retry = true) {
+    const headers = { ...(opts.headers || {}) };
+    if (state.token) headers.Authorization = "Bearer " + state.token;
+    const slow = setTimeout(() => say("Waking up the server. Free hosting sleeps when idle, so this can take up to a minute…", { sticky: true }), 3500);
+    let res;
+    try { res = await fetch(path, { ...opts, headers }); }
+    catch { throw new Error("Can't reach the server. Check your connection and try again."); }
+    finally { clearTimeout(slow); }
+    if (res.status === 401 && retry && !path.startsWith("/auth/")) { state.token = null; await ensureSession(true); return api(path, opts, false); }
+    if (!res.ok) {
+      let msg = `Something went wrong (error ${res.status}).`;
+      try {
+        const b = await res.json();
+        if (typeof b.detail === "string") msg = b.detail;
+        else if (Array.isArray(b.detail) && b.detail[0]) {
+          const f = b.detail[0].loc?.slice(-1)[0];
+          msg = { amount: "Please enter an amount greater than zero.", category: "Please enter a category.", date: "Please pick a valid date." }[f] || b.detail[0].msg;
+        }
+      } catch {}
+      throw new Error(msg);
+    }
+    return res.status === 204 ? null : res.json();
+  }
+  async function login(c) {
+    const r = await api("/auth/login", { method: "POST", body: new URLSearchParams({ username: c.email, password: c.password }) }, false);
+    state.token = r.access_token;
+  }
+  async function ensureSession(force = false) {
+    if (state.token && !force) return;
+    let c = store.get("ledger-guest");
+    if (c) { try { await login(c); return; } catch { store.del("ledger-guest"); } }
+    const r = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)).replace(/-/g, "");
+    c = { email: `guest-${r.slice(0, 12)}@example.com`, password: r };
+    await api("/auth/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) }, false);
+    await login(c); store.set("ledger-guest", c);
+  }
+
+  // ---------- loading & rendering ----------
+  async function load() {
+    const m = monthKey(state.month);
+    $("#month-label").textContent = state.month.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+    const [txs, summary] = await Promise.all([api(`/transactions?month=${m}&limit=200`), api(`/summary?month=${m}`)]);
+    state.txs = txs; state.summary = summary;
+    if (state.filter && !txs.some((x) => x.category === state.filter)) state.filter = null;
+    render();
+  }
+  function render() {
+    const s = state.summary, ins = state.txs.filter((x) => x.type === "income"), outs = state.txs.filter((x) => x.type === "expense");
+    $("#s-in").textContent = fmt(s.total_income);
+    $("#s-out").textContent = fmt(s.total_expense);
+    $("#s-bal").textContent = fmt(s.balance);
+    $("#s-in-n").textContent = `${ins.length} payment${ins.length === 1 ? "" : "s"} received`;
+    $("#s-out-n").textContent = `${outs.length} expense${outs.length === 1 ? "" : "s"}`;
+    $("#s-bal-n").textContent = Number(s.balance) < 0 ? "You spent more than you earned" : "Money in minus money out";
+
+    // categories (expenses only)
+    const byCat = new Map();
+    for (const x of outs) byCat.set(x.category, (byCat.get(x.category) || 0) + Number(x.amount));
+    const cats = [...byCat.entries()].sort((a, b) => b[1] - a[1]);
+    const max = cats[0]?.[1] || 1, total = Number(s.total_expense) || 1;
+    const list = $("#cats"); list.replaceChildren(); $("#cats-empty").hidden = cats.length > 0;
+    for (const [name, amt] of cats) {
+      const li = el("li"); const b = el("button", "cat"); b.type = "button"; b.setAttribute("aria-pressed", String(state.filter === name));
+      const row = el("div", "row"); const left = el("span"); const dot = el("span", "dot"); dot.style.background = colorFor(name);
+      left.append(dot, document.createTextNode(name)); row.append(left, el("b", null, `${fmt(amt)} · ${Math.round((amt / total) * 100)}%`));
+      const bar = el("div", "bar"); const fill = el("i"); fill.style.width = `${Math.max(3, (amt / max) * 100)}%`; fill.style.background = colorFor(name); bar.append(fill);
+      b.append(row, bar); b.addEventListener("click", () => { state.filter = state.filter === name ? null : name; render(); });
+      li.append(b); list.append(li);
+    }
+
+    // ledger
+    const slot = $("#filter-slot"); slot.replaceChildren();
+    if (state.filter) {
+      const pill = el("span", "filter-pill", state.filter); const x = el("button", null, "×"); x.type = "button"; x.setAttribute("aria-label", "Clear filter");
+      x.addEventListener("click", () => { state.filter = null; render(); }); pill.append(x); slot.append(pill);
+    }
+    const rows = state.filter ? state.txs.filter((x) => x.category === state.filter) : state.txs;
+    const ul = $("#ledger"); ul.replaceChildren();
+    const empty = $("#ledger-empty"); empty.hidden = rows.length > 0;
+    empty.textContent = "Nothing recorded this month yet. Add your first expense or income on the left.";
+    for (const x of rows) {
+      const li = el("li"); if (state.editing === x.id) li.className = "editing";
+      const d = new Date(x.date + "T00:00:00");
+      const dd = el("div", "d"); dd.append(el("b", null, String(d.getDate())), document.createTextNode(d.toLocaleDateString("en-IN", { month: "short" })));
+      const c = el("div", "c"); const cb = el("b"); const dot = el("span", "dot"); dot.style.background = colorFor(x.category);
+      cb.append(dot, document.createTextNode(x.category)); c.append(cb, el("span", null, x.note || (x.type === "income" ? "Income" : "Expense")));
+      const a = el("div", "a " + (x.type === "income" ? "in" : "out"), (x.type === "income" ? "+ " : "− ") + fmt(x.amount));
+      const acts = el("div", "row-actions");
+      const edit = el("button", "icon", "Edit"); edit.type = "button"; edit.addEventListener("click", () => startEdit(x));
+      const del = el("button", "icon", "Delete"); del.type = "button";
+      del.addEventListener("click", async () => {
+        if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "Sure?"; setTimeout(() => { del.classList.remove("armed"); del.textContent = "Delete"; }, 3500); return; }
+        try { await api(`/transactions/${x.id}`, { method: "DELETE" }); if (state.editing === x.id) resetForm(); say("Transaction deleted."); await load(); }
+        catch (e) { say(e.message, { error: true }); }
+      });
+      acts.append(edit, del); li.append(dd, c, a, acts); ul.append(li);
+    }
+    const dl = $("#cat-list"); dl.replaceChildren();
+    for (const name of new Set([...CATEGORIES, ...state.txs.map((x) => x.category)])) { const o = el("option"); o.value = name; dl.append(o); }
+  }
+
+  // ---------- form ----------
+  function setType(type) {
+    state.type = type;
+    document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.type === type)));
+    $("#save").textContent = state.editing ? "Save changes" : (type === "income" ? "Add income" : "Add expense");
+  }
+  function defaultDate() {
+    const now = new Date();
+    return monthKey(now) === monthKey(state.month) ? isoDate(now) : isoDate(state.month);
+  }
+  function resetForm() {
+    state.editing = null; $("#form").reset(); $("#date").value = defaultDate();
+    $("#editing-note").hidden = true; $("#cancel-edit").hidden = true; setType(state.type);
+  }
+  function startEdit(x) {
+    state.editing = x.id; setType(x.type);
+    $("#amount").value = Number(x.amount); $("#date").value = x.date; $("#category").value = x.category; $("#note").value = x.note || "";
+    $("#editing-note").hidden = false; $("#cancel-edit").hidden = false; $("#save").textContent = "Save changes";
+    render(); $("#amount").focus(); $("#form").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  async function submit(e) {
+    e.preventDefault();
+    const amount = $("#amount").value.replace(/[,₹\s]/g, "");
+    if (!(Number(amount) > 0)) { say("Please enter an amount greater than zero.", { error: true }); $("#amount").focus(); return; }
+    if (!$("#category").value.trim()) { say("Please enter a category.", { error: true }); $("#category").focus(); return; }
+    const body = { amount: Number(amount).toFixed(2), type: state.type, category: $("#category").value.trim(), note: $("#note").value.trim() || null, date: $("#date").value };
+    $("#save").disabled = true;
+    try {
+      const path = state.editing ? `/transactions/${state.editing}` : "/transactions";
+      const saved = await api(path, { method: state.editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      say(state.editing ? "Changes saved." : `${body.type === "income" ? "Income" : "Expense"} of ${fmt(body.amount)} added.`);
+      const savedMonth = firstOfMonth(new Date(saved.date + "T00:00:00"));
+      resetForm();
+      if (monthKey(savedMonth) !== monthKey(state.month)) { state.month = savedMonth; $("#date").value = defaultDate(); }
+      await load();
+    } catch (err) { say(err.message, { error: true }); }
+    finally { $("#save").disabled = false; }
+  }
+
+  // ---------- demo data ----------
+  async function seedDemo() {
+    const now = new Date(), y = now.getFullYear(), m = now.getMonth(), maxDay = now.getDate();
+    const day = (n) => isoDate(new Date(y, m, Math.min(n, maxDay)));
+    const items = [
+      ["income", 52000, "Salary", "Monthly salary", 1], ["expense", 12000, "Rent", "Flat rent", 2], ["expense", 1850, "Groceries", "Monthly staples", 3],
+      ["expense", 999, "Bills", "Broadband", 4], ["expense", 640, "Transport", "Metro card top-up", 5], ["expense", 420, "Food & dining", "Lunch with team", 6],
+      ["expense", 2240, "Groceries", "Vegetables and fruit", 8], ["expense", 1499, "Shopping", "Running shoes", 9], ["income", 6000, "Freelance", "Website fix for a client", 10],
+      ["expense", 780, "Health", "Pharmacy", 11], ["expense", 540, "Entertainment", "Movie night", 12], ["expense", 2150, "Groceries", "Weekend shopping", 13],
+      ["expense", 1540, "Transport", "Cab to the airport", 14], ["expense", 960, "Food & dining", "Dinner out", 15],
+    ];
+    let i = 0;
+    for (const [type, amount, category, note, d] of items) {
+      say(`Filling in a demo month… ${++i}/${items.length}`, { sticky: true });
+      await api("/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, amount: amount.toFixed(2), category, note, date: day(d) }) });
+    }
+  }
+  async function start(withDemo) {
+    const btns = [$("#demo"), $("#fresh")]; btns.forEach((b) => (b.disabled = true));
+    try {
+      await ensureSession();
+      state.month = firstOfMonth(new Date());
+      if (withDemo) {
+        const existing = await api(`/transactions?month=${monthKey(state.month)}&limit=1`);
+        if (!existing.length) await seedDemo();
+      }
+      showApp(); await load(); resetForm();
+      say(withDemo ? "Here's a demo month. Try adding, editing or deleting entries." : "Your ledger is ready. Add your first entry.");
+    } catch (e) { say(e.message, { error: true }); }
+    finally { btns.forEach((b) => (b.disabled = false)); }
+  }
+  function showApp() { $("#app").hidden = false; $("#app").scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+  // ---------- wiring ----------
+  $("#demo").addEventListener("click", () => start(true));
+  $("#fresh").addEventListener("click", () => start(false));
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => setType(b.dataset.type)));
+  $("#form").addEventListener("submit", submit);
+  $("#cancel-edit").addEventListener("click", () => { resetForm(); render(); });
+  const shift = (n) => async () => { state.month = new Date(state.month.getFullYear(), state.month.getMonth() + n, 1); state.filter = null;
+    if (!state.editing) $("#date").value = defaultDate(); try { await load(); } catch (e) { say(e.message, { error: true }); } };
+  $("#prev").addEventListener("click", shift(-1)); $("#next").addEventListener("click", shift(1));
+  $("#today").addEventListener("click", async () => { state.month = firstOfMonth(new Date()); state.filter = null; if (!state.editing) $("#date").value = defaultDate(); await load().catch((e) => say(e.message, { error: true })); });
+  $("#date").value = defaultDate();
+
+  if (store.get("ledger-guest")) {   // returning visitor: reopen their ledger
+    ensureSession().then(() => { $("#app").hidden = false; return load(); }).then(resetForm).catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
